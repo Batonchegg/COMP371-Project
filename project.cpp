@@ -1,5 +1,3 @@
-// main.cpp
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -11,13 +9,16 @@
 #include <fstream>
 #include <sstream>
 #include <glm/gtc/type_ptr.hpp>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
 
 
-// ===== Шейдеры =====
+//Shaders
 const char* vertexShaderSource = R"(
 #version 330 core
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aTexCoord;
 
 uniform mat4 worldMatrix;
 uniform mat4 viewMatrix;
@@ -25,19 +26,26 @@ uniform mat4 projectionMatrix;
 
 out vec3 FragPos;
 out vec3 Normal;
+out vec2 TexCoord;
 
 void main() {
     FragPos = vec3(worldMatrix * vec4(aPos, 1.0));
     Normal = mat3(transpose(inverse(worldMatrix))) * aNormal;
+    TexCoord = aTexCoord;
     gl_Position = projectionMatrix * viewMatrix * vec4(FragPos, 1.0);
 })";
+
 
 const char* fragmentShaderSource = R"(
 #version 330 core
 in vec3 FragPos;
 in vec3 Normal;
+in vec2 TexCoord;
 
 out vec4 FragColor;
+
+uniform sampler2D texture1;
+uniform bool useTexture;
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
@@ -46,7 +54,7 @@ uniform vec3 objectColor;
 
 void main() {
     // Ambient
-    float ambientStrength = 0.5;
+    float ambientStrength = 0.2;
     vec3 ambient = ambientStrength * lightColor;
 
     // Diffuse
@@ -59,12 +67,18 @@ void main() {
     float specularStrength = 0.5;
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
     vec3 specular = specularStrength * spec * lightColor;
 
-    vec3 result = (ambient + diffuse + specular) * objectColor;
+    vec3 lighting = (ambient + diffuse + specular);
+
+    vec3 baseColor = useTexture ? texture(texture1, TexCoord).rgb : objectColor;
+
+    vec3 result = lighting * baseColor;
     FragColor = vec4(result, 1.0);
-})";
+}
+)";
+
 
 
 
@@ -83,7 +97,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 
-// ===== Функции для компиляции шейдера =====
+// Shaders linking and compilation
 GLuint compileShader(GLenum type, const char* source)
 {
     GLuint shader = glCreateShader(type);
@@ -120,65 +134,66 @@ GLuint createShaderProgram()
         std::cerr << "Program linking error:\n" << infoLog << std::endl;
     }
 
-    // Шейдеры больше не нужны после линковки
+
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
     return program;
 }
 
-// ===== Куб =====
+// Cube vertices
 float cubeVertices[] = {
-    // Позиции          // Нормали
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+    // Position          // Normals           // Texture coordinates
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
 
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,
 
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
 
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
 
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
 
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
 };
 
-// ===== Функция рисования куба =====
+//Draw function
 void drawColorCube(GLuint shaderProgram, GLuint VAO,
                    const glm::mat4& worldMatrix,
                    const glm::vec3& color,
                    const glm::mat4& viewMatrix,
-                   const glm::mat4& projectionMatrix)
+                   const glm::mat4& projectionMatrix,
+                    GLuint texture =0)
 {
     glUseProgram(shaderProgram);
 
@@ -187,9 +202,26 @@ void drawColorCube(GLuint shaderProgram, GLuint VAO,
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]);
     glUniform3fv(glGetUniformLocation(shaderProgram, "objectColor"), 1, &color[0]);
 
+
+    if(texture !=0)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), 1);
+        glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
+    }
+    else{
+        glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), 0);
+    }
+
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
+
+
+    if(texture != 0){
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
 }
 
 
@@ -208,7 +240,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     }
 
     float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // инверсия по Y
+    float yoffset = lastY - ypos;
     lastX = xpos;
     lastY = ypos;
 
@@ -248,8 +280,7 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 
-    
-    // Зафиксировать камеру по высоте
+        //fixing camera at one height to imitate walking
     cameraPos.y = 0.51f;
 
 }
@@ -273,7 +304,7 @@ int main()
         return -1;
     }
 
-    // Создаём окно OpenGL 3.3
+    // Creating window
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -301,7 +332,7 @@ int main()
 
     GLuint shaderProgram = createShaderProgram();
 
-    // Настройка VAO и VBO куба
+    // Creating VAO and VBO
     GLuint VAO, VBO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -310,60 +341,97 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
 
-    // Позиции — location = 0
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+// Positions
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+glEnableVertexAttribArray(0);
 
-    // Нормали — location = 1
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+// Normals
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+glEnableVertexAttribArray(1);
+
+// Texture Coordinates
+glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+glEnableVertexAttribArray(2);
+
 
 
     glBindVertexArray(0);
 
-    // Матрицы камеры
+    // Camera matrix
     glm::mat4 projectionMatrix = glm::perspective(glm::radians(70.0f), 800.f / 600.f, 0.01f, 100.f);
 
 
 
 
+    ////////////////////////////////////////////////////////////////
+
+            int width, height, nrChannels;
+        unsigned char* data = stbi_load("grass.jpg", &width, &height, &nrChannels, 0);
+        unsigned int texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        // Wrapping and filtering 
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        // Loading texture
+        if (data) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+        } else {
+            std::cout << "Failed to load texture" << std::endl;
+        }
+        stbi_image_free(data);
+
+
+    //////////////////////////////////////////////////////////////
 
 
 
-    // Цикл рендера
+
+
+
+
+
+
+    // Rendering loop
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
 
-        glClearColor(0.3f, 0.3f, 0.3f, 1.0f);  // серый фон
+        glClearColor(0.3f, 0.3f, 0.3f, 1.0f); 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-// Внутри рендер-цикла
-float time = glfwGetTime();
-lightPos.x = 2.0f * sin(time);
-lightPos.z = 2.0f * cos(time);
 
-glUseProgram(shaderProgram);
-glUniform3fv(glGetUniformLocation(shaderProgram, "lightPos"), 1, glm::value_ptr(lightPos));
-glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, glm::value_ptr(cameraPos));
+        float time = glfwGetTime();
+        lightPos.x = 2.0f * sin(time);
+        lightPos.z = 2.0f * cos(time);
 
-// Теперь рисуй объект
+        glUseProgram(shaderProgram);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "lightPos"), 1, glm::value_ptr(lightPos));
+        glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, glm::value_ptr(cameraPos));
+
+        // Drawing objects
 
 
 
         glUseProgram(shaderProgram);
 
-        // Динамическое движение источника света
+        // Dynamic light
         glm::vec3 lightPos = glm::vec3(sin(glfwGetTime()) * 2.0f, 1.5f, cos(glfwGetTime()) * 2.0f);
         glUniform3fv(glGetUniformLocation(shaderProgram, "lightPos"), 1, &lightPos[0]);
 
-        // Цвет источника света (белый)
+        // Setting white color for light
         glm::vec3 lightColor = glm::vec3(1.0f);
         glUniform3fv(glGetUniformLocation(shaderProgram, "lightColor"), 1, &lightColor[0]);
 
-        // Позиция камеры
+        // Camera position
         glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, &cameraPos[0]);
+
 
 
 
@@ -380,24 +448,31 @@ glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, glm::value_ptr(c
         glm::mat4 viewMatrix = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 
-        // Рисуем пол (зелёный параллелепипед)
+        // Drawing floor
         glm::mat4 floorMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.51f, 0.0f)) *
                                 glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 0.02f, 10.0f));
         glm::vec3 floorColor = glm::vec3(0.0f, 1.0f, 0.0f);
 
         glm::vec3 wallColor = glm::vec3(0.529f, 0.808f, 0.922f);
 
-        drawColorCube(shaderProgram, VAO, floorMatrix, floorColor, viewMatrix, projectionMatrix);
+        drawColorCube(shaderProgram, VAO, floorMatrix, floorColor, viewMatrix, projectionMatrix, texture);
 
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+
+        //Drawing ceiling 
 
         glm::mat4 CeilingMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 5.0f, 0.0f)) *
                                   glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 0.02f, 10.0f));
 
-        drawColorCube(shaderProgram, VAO, CeilingMatrix, wallColor, viewMatrix, projectionMatrix);
 
 
-        // Рисуем стены (синие)
-        //glm::vec3 wallColor = glm::vec3(0.0f, 0.0f, 1.0f);
+        drawColorCube(shaderProgram, VAO, CeilingMatrix, wallColor, viewMatrix, projectionMatrix );
+
+
+        // Drawing walls
+       
 
         glm::mat4 wall1 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
                           glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 0.1f));
