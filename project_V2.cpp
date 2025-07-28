@@ -667,14 +667,23 @@ int main()
         }
 
         glm::mat4 pillarsRotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+        float pillarOrbitRadii[] = { 10.0f, 10.0f, 10.0f, 10.0f };
+        float pillarOrbitSpeeds[] = { 0.3f, 0.3f, 0.3f, 0.3f };
 
         // Draw pillars with rotation applied
         for (int i = 0; i < 4; ++i)
         {
+            float angleOffset = glm::radians(90.0f * i); 
+            float anglePillar = time * pillarOrbitSpeeds[i] + angleOffset;
+            float x = sin(anglePillar) * pillarOrbitRadii[i];
+            float z = cos(anglePillar) * pillarOrbitRadii[i];
+            glm::vec3 position = glm::vec3(x, 5.0f, z);
+            
             glm::mat4 pillarMatrix =
-            glm::translate(glm::mat4(1.0f), pillarPositions[i]) * pillarsRotation * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 10.0f, 1.0f));
+            glm::translate(glm::mat4(1.0f), position) * pillarsRotation * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 10.0f, 1.0f));
 
             drawColorCube(shaderProgram, cubeVAO, pillarMatrix, pillarColor, viewMatrix, projectionMatrix, textures[i]);
+            
         }
 
         /*for (std::list<Projectile>::iterator it = projectileList.begin(); it != projectileList.end(); it++) {
