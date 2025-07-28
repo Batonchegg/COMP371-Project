@@ -283,7 +283,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     lastX = xpos;
     lastY = ypos;
 
-    float sensitivity = 0.5f;
+    float sensitivity = 0.5f; //increasing speed
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
