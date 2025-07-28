@@ -450,6 +450,7 @@ int main()
     GLuint planet1Texture = loadTexture("earth.jpg");
     GLuint planet2Texture = loadTexture("mars.jpg");
     GLuint moonTexture = loadTexture("moon.jpg");
+    GLuint skyTexture = loadTexture("sky.jpeg");
 
     glm::mat4 projectionMatrix = glm::perspective(glm::radians(70.0f), 1200.0f / 700.0f, 0.01f, 100.0f);
 
@@ -500,19 +501,19 @@ int main()
         // Draw walls
         glm::mat4 wall1 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -15.0f)) *
                           glm::scale(glm::mat4(1.0f), glm::vec3(30.0f, 30.0f, 0.1f));
-        drawObject(shaderProgram, cubeVAO, wall1, wallColor, viewMatrix, projectionMatrix);
+        drawObject(shaderProgram, cubeVAO, wall1, wallColor, viewMatrix, projectionMatrix, skyTexture);
 
         glm::mat4 wall2 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 15.0f)) *
                           glm::scale(glm::mat4(1.0f), glm::vec3(30.0f, 30.0f, 0.1f));
-        drawObject(shaderProgram, cubeVAO, wall2, wallColor, viewMatrix, projectionMatrix);
+        drawObject(shaderProgram, cubeVAO, wall2, wallColor, viewMatrix, projectionMatrix, skyTexture);
 
         glm::mat4 wall3 = glm::translate(glm::mat4(1.0f), glm::vec3(-15.0f, 0.0f, 0.0f)) *
                           glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 30.0f, 30.0f));
-        drawObject(shaderProgram, cubeVAO, wall3, wallColor, viewMatrix, projectionMatrix);
+        drawObject(shaderProgram, cubeVAO, wall3, wallColor, viewMatrix, projectionMatrix, skyTexture);
 
         glm::mat4 wall4 = glm::translate(glm::mat4(1.0f), glm::vec3(15.0f, 0.0f, 0.0f)) *
                           glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 30.0f, 30.0f));
-        drawObject(shaderProgram, cubeVAO, wall4, wallColor, viewMatrix, projectionMatrix);
+        drawObject(shaderProgram, cubeVAO, wall4, wallColor, viewMatrix, projectionMatrix, skyTexture);
 
         // Draw spheres
         // Central sphere
