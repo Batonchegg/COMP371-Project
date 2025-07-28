@@ -625,37 +625,43 @@ int main()
 
         // Draw spheres
         // Central sphere
-        glm::mat4 centerSphereMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
-                                       glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
-        glm::vec3 centerSphereColor = glm::vec3(1.0f, 1.0f, 0.0f); // Yellow (fallback)
-        drawObject(shaderProgram, sphereVAO, centerSphereMatrix, centerSphereColor, viewMatrix, projectionMatrix, sunTexture, true, sphereEBO, sphereIndices.size());
 
-        // Orbiting sphere 1
-        float orbitRadius1 = 5.0f;
-        float orbitSpeed1 = 1.0f;
-        glm::vec3 orbitSphere1Pos = glm::vec3(sin(time * orbitSpeed1) * orbitRadius1, 1.0f, cos(time * orbitSpeed1) * orbitRadius1);
-        glm::mat4 orbitSphere1Matrix = glm::translate(glm::mat4(1.0f), orbitSphere1Pos) *
-                                       glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
-        glm::vec3 orbitSphere1Color = glm::vec3(1.0f, 0.0f, 0.0f); // Red (fallback)
-        drawObject(shaderProgram, sphereVAO, orbitSphere1Matrix, orbitSphere1Color, viewMatrix, projectionMatrix, planet1Texture, true, sphereEBO, sphereIndices.size());
+        glm::vec3 sunPosition = glm::vec3(0.0f, 0.5f, 0.0f);
 
-        // Orbiting sphere 2
-        float orbitRadius2 = 3.0f;
-        float orbitSpeed2 = 0.5f;
-        glm::mat4 orbitSphere2Matrix = glm::translate(glm::mat4(1.0f), glm::vec3(sin(time * orbitSpeed2) * orbitRadius2, 1.0f, cos(time * orbitSpeed2) * orbitRadius2)) *
-                                       glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
-        glm::vec3 orbitSphere2Color = glm::vec3(0.0f, 0.0f, 1.0f); // Blue (fallback)
-        drawObject(shaderProgram, sphereVAO, orbitSphere2Matrix, orbitSphere2Color, viewMatrix, projectionMatrix, planet2Texture, true, sphereEBO, sphereIndices.size());
+glm::mat4 centerSphereMatrix = glm::translate(glm::mat4(1.0f), sunPosition) *
+                                   glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
+    glm::vec3 centerSphereColor = glm::vec3(1.0f, 1.0f, 0.0f); // Yellow (fallback)
+    drawObject(shaderProgram, sphereVAO, centerSphereMatrix, centerSphereColor, viewMatrix, projectionMatrix, sunTexture, true, sphereEBO, sphereIndices.size());
 
-        // New sphere orbiting the first orbiting sphere
-        float orbitRadius3 = 0.8f;
-        float orbitSpeed3 = 2.0f;
-        glm::vec3 orbitSphere3RelativePos = glm::vec3(sin(time * orbitSpeed3) * orbitRadius3, 0.0f, cos(time * orbitSpeed3) * orbitRadius3);
-        glm::mat4 orbitSphere3Matrix = glm::translate(glm::mat4(1.0f), orbitSphere1Pos + orbitSphere3RelativePos) *
-                                       glm::scale(glm::mat4(1.0f), glm::vec3(0.3f));
-        glm::vec3 orbitSphere3Color = glm::vec3(0.0f, 1.0f, 0.0f); // Green (fallback)
-        drawObject(shaderProgram, sphereVAO, orbitSphere3Matrix, orbitSphere3Color, viewMatrix, projectionMatrix, moonTexture, true, sphereEBO, sphereIndices.size());
+    // Orbiting sphere 1 (Planet 1)
+    float orbitRadius1 = 5.0f;
+    float orbitSpeed1 = 1.0f;
+    glm::vec3 orbitSphere1RelativePos = glm::vec3(sin(time * orbitSpeed1) * orbitRadius1, 0.0f, cos(time * orbitSpeed1) * orbitRadius1);
+    glm::vec3 orbitSphere1Pos = sunPosition + orbitSphere1RelativePos;
+    glm::mat4 orbitSphere1Matrix = glm::translate(glm::mat4(1.0f), orbitSphere1Pos) *
+                                   glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
+    glm::vec3 orbitSphere1Color = glm::vec3(1.0f, 0.0f, 0.0f); // Red (fallback)
+    drawObject(shaderProgram, sphereVAO, orbitSphere1Matrix, orbitSphere1Color, viewMatrix, projectionMatrix, planet1Texture, true, sphereEBO, sphereIndices.size());
 
+    // Orbiting sphere 2 (Planet 2)
+    float orbitRadius2 = 3.0f;
+    float orbitSpeed2 = 0.5f;
+    glm::vec3 orbitSphere2RelativePos = glm::vec3(sin(time * orbitSpeed2) * orbitRadius2, 0.0f, cos(time * orbitSpeed2) * orbitRadius2);
+    glm::vec3 orbitSphere2Pos = sunPosition + orbitSphere2RelativePos;
+    glm::mat4 orbitSphere2Matrix = glm::translate(glm::mat4(1.0f), orbitSphere2Pos) *
+                                   glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
+    glm::vec3 orbitSphere2Color = glm::vec3(0.0f, 0.0f, 1.0f); // Blue (fallback)
+    drawObject(shaderProgram, sphereVAO, orbitSphere2Matrix, orbitSphere2Color, viewMatrix, projectionMatrix, planet2Texture, true, sphereEBO, sphereIndices.size());
+
+    // Moon orbiting Planet 1
+    float orbitRadius3 = 0.8f;
+    float orbitSpeed3 = 2.0f;
+    glm::vec3 orbitSphere3RelativePos = glm::vec3(sin(time * orbitSpeed3) * orbitRadius3, 0.0f, cos(time * orbitSpeed3) * orbitRadius3);
+    glm::vec3 orbitSphere3Pos = orbitSphere1Pos + orbitSphere3RelativePos;
+    glm::mat4 orbitSphere3Matrix = glm::translate(glm::mat4(1.0f), orbitSphere3Pos) *
+                                   glm::scale(glm::mat4(1.0f), glm::vec3(0.3f));
+    glm::vec3 orbitSphere3Color = glm::vec3(0.0f, 1.0f, 0.0f); // Green (fallback)
+    drawObject(shaderProgram, sphereVAO, orbitSphere3Matrix, orbitSphere3Color, viewMatrix, projectionMatrix, moonTexture, true, sphereEBO, sphereIndices.size());
         //Draw pillars
         glm::vec3 pillarColor = glm::vec3(0.0f, 0.0f, 0.0f); // black
         GLuint textures[] = {fireTexture, waterTexture, soilTexture, windTexture};
