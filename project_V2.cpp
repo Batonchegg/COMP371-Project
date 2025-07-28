@@ -424,7 +424,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     cameraFront = glm::normalize(front);
 }
 
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow* window, glm::vec3& sunPosition)
 {
     float cameraSpeed = 3.0f * deltaTime;
 
@@ -436,6 +436,13 @@ void processInput(GLFWwindow* window)
         cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    
+        float moveSpeed = 2.0f * deltaTime;
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        sunPosition.y += moveSpeed;
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        sunPosition.y -= moveSpeed;
 
     cameraPos.y = 0.51f;
 
@@ -449,6 +456,7 @@ glm::vec3 lightColor2 = glm::vec3(1.0f, 0.0f, 0.0f);
 
 int main()
 {
+    glm::vec3 sunPosition = glm::vec3(0.0f, 0.5f, 0.0f);
     float rotationSpeed = 180.0f;  // 180 degrees per second
     float angle = 0;
     float lastFrameTime = glfwGetTime();
@@ -590,7 +598,7 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        processInput(window);
+        processInput(window, sunPosition);
 
         glm::mat4 viewMatrix = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
@@ -626,7 +634,7 @@ int main()
         // Draw spheres
         // Central sphere
 
-        glm::vec3 sunPosition = glm::vec3(0.0f, 0.5f, 0.0f);
+        
 
 glm::mat4 centerSphereMatrix = glm::translate(glm::mat4(1.0f), sunPosition) *
                                    glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
@@ -718,6 +726,10 @@ glm::mat4 centerSphereMatrix = glm::translate(glm::mat4(1.0f), sunPosition) *
     glDeleteTextures(1, &planet1Texture);
     glDeleteTextures(1, &planet2Texture);
     glDeleteTextures(1, &moonTexture);
+    glDeleteTextures(1, &fireTexture);
+    glDeleteTextures(1, &waterTexture);
+    glDeleteTextures(1, &soilTexture);
+    glDeleteTextures(1, &windTexture);
 
     glfwDestroyWindow(window);
     glfwTerminate();
