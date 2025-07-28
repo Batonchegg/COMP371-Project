@@ -13,7 +13,7 @@
 #include <list>
 #include <vector>
 
-class Projectile
+/*class Projectile
 {
 public:
     Projectile(glm::vec3 position, glm::vec3 velocity, int shaderProgram) : mPosition(position), mVelocity(velocity)
@@ -49,7 +49,7 @@ private:
     glm::vec3 mPosition;
     glm::vec3 mVelocity;
 };
-
+*/
 
 // Shaders
 const char* vertexShaderSource = R"(
@@ -449,9 +449,12 @@ glm::vec3 lightColor2 = glm::vec3(1.0f, 0.0f, 0.0f);
 
 int main()
 {
+    float rotationSpeed = 180.0f;  // 180 degrees per second
+    float angle = 0;
     float lastFrameTime = glfwGetTime();
+    float dt = glfwGetTime() - lastFrameTime;
     int lastMouseLeftState = GLFW_RELEASE;
-    std::list<Projectile> projectileList;
+    //std::list<Projectile> projectileList;
     if (!glfwInit())
     {
         std::cerr << "Failed to init GLFW\n";
@@ -528,6 +531,11 @@ int main()
 
     glBindVertexArray(0);
 
+    //rotating pillars
+    angle = (angle + rotationSpeed * dt);
+    glm::mat4 pillarsRotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+    
+
     // Load textures
     GLuint floorTexture = loadTexture("grass.jpg");
     GLuint sunTexture = loadTexture("sun.jpeg");
@@ -544,17 +552,17 @@ int main()
     // Rendering loop
     while (!glfwWindowShouldClose(window))
     {
-        float dt = glfwGetTime() - lastFrameTime;
+        
         lastFrameTime += dt;
         glm::vec3 pillarPositions[] = { //positions for pillars
         //glm::vec3(0.0f, 0.0f, -4.0f),   
-        glm::vec3(-8.0f, 0.0f, -8.0f), 
-        glm::vec3(8.0f, 0.0f, -8.0f),   
+        glm::vec3(-8.0f, 6.0f, -8.0f), 
+        glm::vec3(8.0f, 6.0f, -8.0f),   
         //glm::vec3(-4.0f, 0.0f, 0.0f),
         //glm::vec3(4.0f, 0.0f, 0.0f),
-        glm::vec3(-8.0f, 0.0f, 8.0f),
+        glm::vec3(-8.0f, 6.0f, 8.0f),
         //glm::vec3(0.0f, 0.0f, 4.0f),
-        glm::vec3(8.0f, 0.0f, 8.0f)   
+        glm::vec3(8.0f, 6.0f, 8.0f)   
         };
 
         glfwPollEvents();
@@ -653,14 +661,23 @@ int main()
         GLuint textures[] = {fireTexture, waterTexture, soilTexture, windTexture};
 
 
+        angle += rotationSpeed * deltaTime;
+        if (angle > 360.0f) {
+            angle -= 360.0f;
+        }
+
+        glm::mat4 pillarsRotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        // Draw pillars with rotation applied
         for (int i = 0; i < 4; ++i)
         {
-            glm::mat4 pillarMatrix = glm::translate(glm::mat4(1.0f), pillarPositions[i]) *
-                                     glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 10.0f, 1.0f));
+            glm::mat4 pillarMatrix =
+            glm::translate(glm::mat4(1.0f), pillarPositions[i]) * pillarsRotation * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 10.0f, 1.0f));
+
             drawColorCube(shaderProgram, cubeVAO, pillarMatrix, pillarColor, viewMatrix, projectionMatrix, textures[i]);
         }
 
-        for (std::list<Projectile>::iterator it = projectileList.begin(); it != projectileList.end(); it++) {
+        /*for (std::list<Projectile>::iterator it = projectileList.begin(); it != projectileList.end(); it++) {
             it->Update(dt);
             it->Draw(shaderProgram, cubeVAO, viewMatrix, projectionMatrix);
         }
@@ -668,7 +685,7 @@ int main()
         if (lastMouseLeftState == GLFW_RELEASE && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
             const float projectileSpeed = 25.0f;
             projectileList.push_back(Projectile(cameraPos, projectileSpeed * cameraFront, shaderProgram));
-        }
+        }*/
         lastMouseLeftState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
 
 
