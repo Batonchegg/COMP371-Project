@@ -465,7 +465,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(1200, 700, "Parallelepiped Scene with Textured Spheres", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1200, 700, "Assignment 1", nullptr, nullptr);
     if (!window)
     {
         std::cerr << "Failed to create GLFW window\n";
