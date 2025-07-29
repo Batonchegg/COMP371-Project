@@ -525,14 +525,10 @@ int main()
         
         lastFrameTime += dt;
         glm::vec3 pillarPositions[] = { //positions for pillars
-        //glm::vec3(0.0f, 0.0f, -4.0f),   
         glm::vec3(-8.0f, 6.0f, -8.0f), 
         glm::vec3(8.0f, 6.0f, -8.0f),   
-        //glm::vec3(-4.0f, 0.0f, 0.0f),
-        //glm::vec3(4.0f, 0.0f, 0.0f),
         glm::vec3(-8.0f, 6.0f, 8.0f),
-        //glm::vec3(0.0f, 0.0f, 4.0f),
-        glm::vec3(8.0f, 6.0f, 8.0f)   
+        glm::vec3(8.0f, 6.0f, 8.0f),   
         };
 
         glfwPollEvents();
