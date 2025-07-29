@@ -11,45 +11,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 #include <list>
-#include <vector>
 
-/*class Projectile
-{
-public:
-    Projectile(glm::vec3 position, glm::vec3 velocity, int shaderProgram) : mPosition(position), mVelocity(velocity)
-    {
-        mWorldMatrixLocation = glGetUniformLocation(shaderProgram, "worldMatrix");
-
-    }
-    
-    void Update(float dt)
-    {
-        mPosition += mVelocity * dt;
-    }
-    
-    void Draw(GLuint shaderProgram, GLuint VAO, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
-        // this is a bit of a shortcut, since we have a single vbo, it is already bound
-        // let's just set the world matrix in the vertex shader
-        
-        glm::mat4 worldMatrix = glm::translate(glm::mat4(1.0f), mPosition) * glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.2f, 0.2f, 0.2f));
-        glUseProgram(shaderProgram);
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "worldMatrix"), 1, GL_FALSE, &worldMatrix[0][0]);
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "viewMatrix"), 1, GL_FALSE, &viewMatrix[0][0]);
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]);
-        glUniform3fv(glGetUniformLocation(shaderProgram, "objectColor"), 1, glm::value_ptr(glm::vec3(1.0f, 0.0f, 0.0f))); // Yellow projectile
-        glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), 0);
-
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-    }
-    
-private:
-    GLuint mWorldMatrixLocation;
-    glm::vec3 mPosition;
-    glm::vec3 mVelocity;
-};
-*/
 
 // Shaders
 const char* vertexShaderSource = R"(
@@ -462,7 +424,7 @@ int main()
     float lastFrameTime = glfwGetTime();
     float dt = glfwGetTime() - lastFrameTime;
     int lastMouseLeftState = GLFW_RELEASE;
-    //std::list<Projectile> projectileList;
+    
     if (!glfwInit())
     {
         std::cerr << "Failed to init GLFW\n";
@@ -700,15 +662,7 @@ glm::mat4 centerSphereMatrix = glm::translate(glm::mat4(1.0f), sunPosition) *
             
         }
 
-        /*for (std::list<Projectile>::iterator it = projectileList.begin(); it != projectileList.end(); it++) {
-            it->Update(dt);
-            it->Draw(shaderProgram, cubeVAO, viewMatrix, projectionMatrix);
-        }
-
-        if (lastMouseLeftState == GLFW_RELEASE && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-            const float projectileSpeed = 25.0f;
-            projectileList.push_back(Projectile(cameraPos, projectileSpeed * cameraFront, shaderProgram));
-        }*/
+        
         lastMouseLeftState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
 
 
