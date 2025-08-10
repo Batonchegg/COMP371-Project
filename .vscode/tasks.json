@@ -9,7 +9,11 @@
                 "-g",
                 "${file}",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${fileDirname}/${fileBasenameNoExtension}",
+                "-lGL",
+                "-lglfw",
+                "-lGLEW"
+
             ],
             "options": {
                 "cwd": "${fileDirname}"
