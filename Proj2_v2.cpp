@@ -828,11 +828,12 @@ glBindFramebuffer(GL_FRAMEBUFFER, 0);
         if (chaseCam) {
             glm::vec3 target = playerPos + glm::vec3(0.0f, 1.0f, 0.0f);
             glm::vec3 back = glm::normalize(glm::vec3(sinf(glm::radians(yawDeg)), 0.0f, cosf(glm::radians(yawDeg))));
-            glm::vec3 desired = target + back * 4.0f + glm::vec3(0.0f, 2.0f, 0.0f);
+            glm::vec3 desired = target + back * 6.0f + glm::vec3(0.0f, 2.0f, 0.0f);
             camPos = glm::mix(camPos, desired, 8.0f * deltaTime);
             camUp = glm::vec3(0.0f, 1.0f, 0.0f);
-            V = glm::lookAt(camPos, target, camUp);
-            aimDir = glm::normalize(target-camPos);
+            glm::vec3 lookAtPoint = target + glm::vec3(0.0f, 1.0f, 0.0f);
+            V = glm::lookAt(camPos, lookAtPoint, camUp);
+            aimDir = glm::normalize(lookAtPoint - camPos);
         } else {
             V = glm::lookAt(camPos, camPos + camFront, camUp);
             aimDir = glm::normalize(camFront);
